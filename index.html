@@ -43,7 +43,7 @@
                         <th>Phone</th>
                         <th>Address</th>
                         <th>Balance</th>
-                        <th colspan="2">Action</th>
+                        <th colspan="3">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,30 +70,32 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <div class="modal-alert-danger hide"></div>
+
                 <form action="" id="frmCreate">
                     <div class="row">
                         <div class="col-lg-6 mt-3">
                             <label for="fullNameCre">Full name</label>
-                            <input type="text" class="form-control" id="fullNameCre">
+                            <input type="text" class="form-control" id="fullNameCre" name="fullNameCre">
                         </div>
                         <div class="col-lg-6 mt-3">
                             <label for="emailCre">Email</label>
-                            <input type="email" class="form-control" id="emailCre">
+                            <input type="email" class="form-control" id="emailCre" name="emailCre">
                         </div>
                         <div class="col-lg-6 mt-3">
                             <label for="phoneCre">Phone</label>
-                            <input type="tel" class="form-control" id="phoneCre">
+                            <input type="tel" class="form-control" id="phoneCre" name="phoneCre">
                         </div>
                         <div class="col-lg-6 mt-3">
                             <label for="addressCre">Address</label>
-                            <input type="text" class="form-control" id="addressCre">
+                            <input type="text" class="form-control" id="addressCre" name="addressCre">
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="btnCreate">Create</button>
+                <button type="button" class="btn btn-outline-primary" id="btnCreate">Create</button>
             </div>
         </div>
         </div>
@@ -133,7 +135,45 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success" id="btnUpdate">Update</button>
+                <button type="button" class="btn btn-outline-success" id="btnUpdate">Update</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Modal Withdraw -->
+    <div class="modal fade" id="modalWithdraw" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modal withdraw money</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="" id="frmWithdraw">
+                    <div class="row">
+                        <div class="col-lg-6 mt-3">
+                            <label for="customerIdWd">Customer Id</label>
+                            <input type="text" class="form-control" id="customerIdWd" readonly>
+                        </div>
+                        <div class="col-lg-6 mt-3">
+                            <label for="fullNameWd">Full name</label>
+                            <input type="text" class="form-control" id="fullNameWd" readonly>
+                        </div>
+                        <div class="col-lg-6 mt-3">
+                            <label for="balanceWd">Current balance ($)</label>
+                            <input type="text" class="form-control" id="balanceWd" readonly>
+                        </div>
+                        <div class="col-lg-6 mt-3">
+                            <label for="transactionAmountWd">Transaction Amount ($)</label>
+                            <input type="text" class="form-control" id="transactionAmountWd">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-warning" id="btnWithdraw">Withdraw</button>
             </div>
         </div>
         </div>
@@ -144,11 +184,13 @@
     <script src="/assets/bootstrap/v5.2/js/bootstrap.bundle.min.js"></script>
     <script src="/assets/fontawesome/v5.15.4/js/all.min.js"></script>
     <script src="/assets/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="/assets/jquery-validate/1.19.3/jquery.validate-1.19.3.min.js"></script>
     <script src="/assets/js/app.js"></script>
 
     <script>
 
         let customer = new Customer();
+        let withdraw = new Withdraw();
 
         function renderCustomer(obj) {
             let str = `
@@ -163,6 +205,12 @@
                         <button class="btn btn-outline-primary edit" data-id="${obj.id}"
                             data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Edit">
                             <i class="fas fa-edit"></i>
+                        </button>    
+                    </td>
+                    <td>
+                        <button class="btn btn-outline-warning withdraw" data-id="${obj.id}"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Withdraw">
+                            <i class="fas fa-minus"></i>
                         </button>    
                     </td>
                     <td>
@@ -197,9 +245,9 @@
 
                 enableTootip();
 
-                handleShowUpdateModal();
+                removeHandleShowModal();
 
-                handleShowConfirmDelete();
+                handleShowGroupModal();
             })
             .fail((jqXHR) => {
                 console.log(jqXHR);
@@ -225,8 +273,8 @@
             })
         }
 
-        let btnCreate = $("#btnCreate");
-        btnCreate.on("click", () => {
+
+        function doCreate() {
             customer.fullName = $("#fullNameCre").val();
             customer.email = $("#emailCre").val();
             customer.phone = $("#phoneCre").val();
@@ -248,11 +296,23 @@
                 let str = renderCustomer(data);
                 tbCustomer.prepend(str);
 
+                enableTootip();
+
+                removeHandleShowModal();
+
+                handleShowGroupModal();
+
                 $("#modalCreateCustomer").modal("hide");
             })
             .fail((jqXHR) => {
                 console.log(jqXHR);
             })
+        }
+
+
+        let btnCreate = $("#btnCreate");
+        btnCreate.on("click", () => {
+            $("#frmCreate").submit();
         })
 
         let btnUpdate = $("#btnUpdate");
@@ -274,7 +334,7 @@
                     accept: "application/json",
                     "content-type": "application/json"
                 },
-                type: "PUT",
+                type: "PATCH",
                 url: "http://localhost:4000/customers/" + customerId,
                 data: JSON.stringify(obj)
             })
@@ -284,6 +344,12 @@
                 let updateRow = $("#tr_" + customerId);
                 updateRow.replaceWith(str);
 
+                enableTootip();
+
+                removeHandleShowModal();
+
+                handleShowGroupModal();
+
                 $("#modalUpdateCustomer").modal("hide");
             })
             .fail((jqXHR) => {
@@ -291,9 +357,89 @@
             })
         })
 
+        let btnWithdraw = $("#btnWithdraw");
+        btnWithdraw.on("click", () => {
+            let customerId = $("#customerIdWd").val();
+
+            let transactionAmount = +$("#transactionAmountWd").val();
+
+            if (customer.balance < transactionAmount) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Current balance not enough to withdraw transaction!',
+                })
+            }
+            else {
+                customer.balance = customer.balance - transactionAmount;
+
+                delete withdraw.id;
+                withdraw.customerId = customer.id;
+                withdraw.transactionAmount = transactionAmount;
+
+                reduceBalance(customerId).then(() => {
+                    insWithdraw();
+                })
+                .catch(() => {
+                    alert("Withdraw error");
+                });
+                
+
+            }
+        })
+
+        function reduceBalance(customerId) {
+            return $.ajax({
+                headers: {
+                    accept: "application/json",
+                    "content-type": "application/json"
+                },
+                type: "PATCH",
+                url: "http://localhost:4000/customers/" + customerId,
+                data: JSON.stringify(customer)
+            })
+            .done((data) => {
+                customer = data;
+            })
+            .fail((jqXHR) => {
+                console.log(jqXHR);
+            })
+        }
+
+        function insWithdraw() {
+            $.ajax({
+                headers: {
+                    accept: "application/json",
+                    "content-type": "application/json"
+                },
+                type: "POST",
+                url: "http://localhost:4000/withdraws",
+                data: JSON.stringify(withdraw)
+            })
+            .done(() => {
+                let str = renderCustomer(customer);
+
+                let updateRow = $("#tr_" + customer.id);
+                updateRow.replaceWith(str);
+
+                enableTootip();
+
+                removeHandleShowModal();
+
+                handleShowGroupModal();
+
+                $("#modalWithdraw").modal("hide");
+            })
+            .fail((jqXHR) => {
+                console.log(jqXHR);
+            })
+        }
+
+
         function handleShowUpdateModal() {
             $(".edit").on("click", function() {
 
+                console.log("Edit");
                 let customerId = $(this).data("id");
                 
                 getCustomerById(customerId).then(() => {
@@ -304,6 +450,23 @@
                     $("#addressUp").val(customer.address);
 
                     $("#modalUpdateCustomer").modal("show");
+                }).catch(() => {
+                    alert("Error");
+                });
+            })
+        }
+
+        function handleShowWithdrawModal() {
+            $(".withdraw").on("click", function() {
+
+                let customerId = $(this).data("id");
+                
+                getCustomerById(customerId).then(() => {
+                    $("#customerIdWd").val(customerId);
+                    $("#fullNameWd").val(customer.fullName);
+                    $("#balanceWd").val(customer.balance);
+
+                    $("#modalWithdraw").modal("show");
                 }).catch(() => {
                     alert("Error");
                 });
@@ -367,11 +530,77 @@
             });
         }
 
+        function handleShowGroupModal() {
+            handleShowUpdateModal();
+
+            handleShowWithdrawModal();
+
+            handleShowConfirmDelete();
+        }
+
+        function removeHandleShowModal() {
+            $(".edit").off("click");
+            $(".withdraw").off("click");
+            $(".delete").off("click");
+        }
+
+
         function enableTootip() {
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
             const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
         }
 
+
+        $("#modalCreateCustomer").on("hidden.bs.modal", () => {
+            $("#modalCreateCustomer .modal-alert-danger").empty().removeClass("show").addClass("hide");
+        })
+
+
+        $("#frmCreate").validate({
+            rules: {
+                fullNameCre: {
+                    required: true,
+                    minlength: 5,
+                    maxlength: 35
+                },
+                emailCre: {
+                    required: true,
+                    minlength: 5,
+                    maxlength: 35,
+                    email: true
+                }
+            },
+            messages: {
+                fullNameCre: {
+                    required: "Vui lòng nhập tên đầy đủ",
+                    minlength: "Độ dài tối thiểu là 5 ký tự",
+                    maxlength: "Độ dài tối đa là 35 ký tự"
+                },
+                emailCre: {
+                    required: "Vui lòng nhập email đầy đủ",
+                    minlength: "Độ dài tối thiểu là 5 ký tự",
+                    maxlength: "Độ dài tối đa là 35 ký tự",
+                    email: "Vui lòng nhập đúng định dạng email"
+                }
+            },
+            errorLabelContainer: "#modalCreateCustomer .modal-alert-danger",
+            errorPlacement: function (error, element) {
+                error.appendTo("#modalCreateCustomer .modal-alert-danger");
+            },
+            showErrors: function(errorMap, errorList) {
+                if (this.numberOfInvalids() > 0) {
+                    $("#modalCreateCustomer .modal-alert-danger").removeClass("hide").addClass("show");
+                } else {
+                    $("#modalCreateCustomer .modal-alert-danger").removeClass("show").addClass("hide").empty();
+                    $("#frmCreate input.error").removeClass("error");
+                }
+                this.defaultShowErrors();
+            },
+            submitHandler: function () {
+                doCreate();
+            }
+        })
+        
         
 
 
